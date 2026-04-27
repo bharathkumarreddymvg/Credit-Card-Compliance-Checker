@@ -1,0 +1,56 @@
+{
+  "feature_names": [
+    "interest_rate",
+    "late_payment_fee",
+    "annual_fee",
+    "billing_cycle",
+    "min_payment",
+    "disclosure"
+  ],
+  "feature_importances": {
+    "interest_rate": 0.2981,
+    "late_payment_fee": 0.2633,
+    "annual_fee": 0.0447,
+    "billing_cycle": 0.1864,
+    "min_payment": 0.1955,
+    "disclosure": 0.012
+  },
+  "accuracy": 0.7667,
+  "classes": [
+    "Non-Compliant",
+    "Compliant"
+  ],
+  "rules": {
+    "interest_rate": {
+      "threshold": 36,
+      "direction": "lte",
+      "label": "Interest Rate \u2264 36%"
+    },
+    "late_payment_fee": {
+      "threshold": 1000,
+      "direction": "lte",
+      "label": "Late Fee \u2264 \u20b91,000"
+    },
+    "annual_fee": {
+      "threshold": 5000,
+      "direction": "lte",
+      "label": "Annual Fee \u2264 \u20b95,000"
+    },
+    "billing_cycle": {
+      "threshold_min": 25,
+      "threshold_max": 31,
+      "direction": "range",
+      "label": "Billing Cycle 25\u201331 days"
+    },
+    "min_payment": {
+      "threshold": 5,
+      "direction": "gte",
+      "label": "Min Payment \u2265 5%"
+    },
+    "disclosure": {
+      "threshold": 1,
+      "direction": "eq",
+      "label": "Disclosure Provided"
+    }
+  }
+}

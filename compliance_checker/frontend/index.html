@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credit Card Compliance Checker</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #efefed;
+    --text: #1a1a18; --text2: #5f5e5a; --text3: #888780;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.25);
+    --green: #1D9E75; --green-bg: #EAF3DE; --green-text: #3B6D11;
+    --red: #E24B4A; --red-bg: #FCEBEB; --red-text: #A32D2D;
+    --amber: #EF9F27; --blue: #378ADD; --blue-bg: #E6F1FB; --blue-text: #185FA5;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f3; color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 2rem 1rem; }
+  .app { width: 100%; max-width: 680px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 20px; background: #fff; color: var(--text2); border: 0.5px solid var(--border); margin-bottom: 10px; }
+  .badge-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+  h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: var(--text2); margin-bottom: 1.5rem; }
+  .card { background: #fff; border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1rem; }
+  .section-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 13px; color: var(--text2); font-weight: 500; }
+  .field input, .field select { height: 38px; border: 1px solid var(--border2); border-radius: var(--radius); padding: 0 10px; font-size: 14px; background: #fff; color: var(--text); outline: none; transition: border-color 0.15s; }
+  .field input:focus, .field select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(55,138,221,0.12); }
+  .field .hint { font-size: 11px; color: var(--text3); }
+  .btn { width: 100%; height: 44px; border-radius: var(--radius); border: none; background: var(--green); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px; transition: opacity 0.15s; }
+  .btn:hover { opacity: 0.88; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 1rem 0; }
+  .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1rem; }
+  .stat-card { background: var(--bg2); border-radius: var(--radius); padding: 12px; text-align: center; }
+  .stat-val { font-size: 22px; font-weight: 600; margin-bottom: 2px; }
+  .stat-lbl { font-size: 11px; color: var(--text3); }
+  .verdict-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+  .verdict-badge.compliant { background: var(--green-bg); color: var(--green-text); }
+  .verdict-badge.noncompliant { background: var(--red-bg); color: var(--red-text); }
+  .conf-bar-wrap { flex: 1; }
+  .conf-label { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
+  .conf-track { height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+  .conf-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+  .conf-fill.compliant { background: var(--green); }
+  .conf-fill.noncompliant { background: var(--red); }
+  .conf-pct { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .result-header { display: flex; align-items: center; gap: 14px; margin-bottom: 1rem; }
+  .viol-list { display: flex; flex-direction: column; gap: 8px; }
+  .viol-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; background: var(--bg2); border-radius: var(--radius); }
+  .viol-item.high { border-left: 3px solid var(--red); }
+  .viol-item.medium { border-left: 3px solid var(--amber); }
+  .viol-rule { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .viol-detail { font-size: 12px; color: var(--text2); }
+  .chip { display: inline-block; font-size: 10px; padding: 2px 6px; background: var(--blue-bg); color: var(--blue-text); border-radius: 20px; margin-left: 6px; font-weight: 500; }
+  .all-ok { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--green-bg); border-radius: var(--radius); font-size: 13px; color: var(--green-text); font-weight: 500; }
+  .fi-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .fi-label { font-size: 12px; color: var(--text2); width: 150px; flex-shrink: 0; }
+  .fi-bar-wrap { flex: 1; height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+  .fi-bar { height: 100%; border-radius: 3px; background: var(--blue); transition: width 0.5s ease; }
+  .fi-pct { font-size: 12px; color: var(--text3); width: 36px; text-align: right; flex-shrink: 0; }
+  .error-box { padding: 12px; background: var(--red-bg); border: 1px solid var(--red); border-radius: var(--radius); font-size: 13px; color: var(--red-text); margin-top: 12px; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fade-in { animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } .stat-cards { grid-template-columns: repeat(3, 1fr); } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div style="margin-bottom:1.5rem">
+    <div class="badge"><span class="badge-dot"></span> ML-Powered · Decision Tree · scikit-learn</div>
+    <h1>Credit Card Compliance Checker</h1>
+    <p class="subtitle">Enter credit card product parameters to check RBI regulatory compliance using a trained ML model</p>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Product Parameters</div>
+    <div class="grid2">
+      <div class="field">
+        <label>Interest Rate (%)</label>
+        <input type="number" id="interest_rate" value="24" min="1" max="100" step="0.1">
+        <span class="hint">Compliant: ≤ 36%</span>
+      </div>
+      <div class="field">
+        <label>Late Payment Fee (₹)</label>
+        <input type="number" id="late_payment_fee" value="750" min="0" step="50">
+        <span class="hint">Compliant: ≤ ₹1,000</span>
+      </div>
+      <div class="field">
+        <label>Annual Fee (₹)</label>
+        <input type="number" id="annual_fee" value="3000" min="0" step="100">
+        <span class="hint">Compliant: ≤ ₹5,000</span>
+      </div>
+      <div class="field">
+        <label>Billing Cycle (days)</label>
+        <input type="number" id="billing_cycle" value="30" min="1" max="60">
+        <span class="hint">Compliant: 25–31 days</span>
+      </div>
+      <div class="field">
+        <label>Minimum Payment (%)</label>
+        <input type="number" id="min_payment" value="5" min="1" max="100" step="0.5">
+        <span class="hint">Compliant: ≥ 5%</span>
+      </div>
+      <div class="field">
+        <label>Disclosure Provided</label>
+        <select id="disclosure">
+          <option value="yes">Yes — Provided</option>
+          <option value="no">No — Not Provided</option>
+        </select>
+        <span class="hint">Must be Yes for compliance</span>
+      </div>
+    </div>
+    <button class="btn" id="predictBtn" onclick="runPrediction()">Run Compliance Check</button>
+    <div id="errorBox" class="error-box" style="display:none"></div>
+  </div>
+
+  <div id="results" style="display:none"></div>
+</div>
+
+<script>
+const API_URL = 'http://localhost:5050/predict';
+
+async function runPrediction() {
+  const btn = document.getElementById('predictBtn');
+  const eb = document.getElementById('errorBox');
+  eb.style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Analyzing...';
+
+  const payload = {
+    interest_rate: parseFloat(document.getElementById('interest_rate').value) || 0,
+    late_payment_fee: parseFloat(document.getElementById('late_payment_fee').value) || 0,
+    annual_fee: parseFloat(document.getElementById('annual_fee').value) || 0,
+    billing_cycle: parseInt(document.getElementById('billing_cycle').value) || 28,
+    min_payment: parseFloat(document.getElementById('min_payment').value) || 5,
+    disclosure: document.getElementById('disclosure').value,
+  };
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Server returned ' + res.status);
+    const data = await res.json();
+    renderResults(data);
+  } catch (e) {
+    eb.innerHTML = '<strong>API Error:</strong> Could not connect to Flask backend at localhost:5050. Make sure <code>python app.py</code> is running.<br><br>Details: ' + e.message;
+    eb.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Run Compliance Check';
+  }
+}
+
+function renderResults(d) {
+  const el = document.getElementById('results');
+  el.style.display = 'block';
+  el.className = 'fade-in';
+
+  const isC = d.is_compliant;
+  const vcls = isC ? 'compliant' : 'noncompliant';
+
+  const fiLabels = {
+    interest_rate: 'Interest Rate',
+    late_payment_fee: 'Late Payment Fee',
+    min_payment: 'Minimum Payment',
+    billing_cycle: 'Billing Cycle',
+    annual_fee: 'Annual Fee',
+    disclosure: 'Disclosure Status'
+  };
+
+  const violHTML = d.rule_violations.length === 0
+    ? `<div class="all-ok"><span style="font-size:16px">✓</span> All 6 compliance rules are satisfied</div>`
+    : d.rule_violations.map(v => `
+        <div class="viol-item ${v.severity}">
+          <span style="color:${v.severity==='high'?'#E24B4A':'#EF9F27'};font-size:16px;flex-shrink:0">✕</span>
+          <div>
+            <div class="viol-rule">${v.rule}</div>
+            <div class="viol-detail">Actual: <strong>${v.actual}</strong> · Expected: <strong>${v.expected}</strong><span class="chip">${v.severity} severity</span></div>
+          </div>
+        </div>`).join('');
+
+  const fiHTML = (d.feature_contributions || []).map(f => `
+    <div class="fi-row">
+      <span class="fi-label">${fiLabels[f.feature] || f.feature}</span>
+      <div class="fi-bar-wrap"><div class="fi-bar" style="width:${Math.min(f.importance_pct * 2.8, 100)}%"></div></div>
+      <span class="fi-pct">${f.importance_pct.toFixed(1)}%</span>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="section-label">Prediction Result</div>
+      <div class="stat-cards">
+        <div class="stat-card">
+          <div class="stat-val" style="color:${isC ? '#3B6D11' : '#A32D2D'}">${d.prediction}</div>
+          <div class="stat-lbl">ML verdict</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">${d.confidence}%</div>
+          <div class="stat-lbl">Confidence</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:${d.violation_count > 0 ? '#A32D2D' : '#3B6D11'}">${d.violation_count}/6</div>
+          <div class="stat-lbl">Rules violated</div>
+        </div>
+      </div>
+
+      <div class="result-header">
+        <div class="verdict-badge ${vcls}">${d.prediction}</div>
+        <div class="conf-bar-wrap">
+          <div class="conf-label">Model confidence</div>
+          <div class="conf-track"><div class="conf-fill ${vcls}" id="cBar" style="width:0%"></div></div>
+          <div class="conf-pct">Confidence: ${d.confidence}% &nbsp;·&nbsp; P(Compliant): ${d.probabilities.Compliant}% &nbsp;·&nbsp; P(Non-Compliant): ${d.probabilities['Non-Compliant']}%</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div class="section-label">Rule-Level Analysis (${d.violation_count} violation${d.violation_count !== 1 ? 's' : ''} detected)</div>
+      <div class="viol-list">${violHTML}</div>
+
+      <hr class="divider">
+      <div class="section-label">Feature Importance — why this decision was made</div>
+      ${fiHTML}
+      <p style="font-size:11px;color:var(--text3);margin-top:8px">
+        Importance from trained Decision Tree. Model test accuracy: ${(d.model_accuracy * 100).toFixed(1)}%
+      </p>
+    </div>`;
+
+  setTimeout(() => {
+    const bar = document.getElementById('cBar');
+    if (bar) bar.style.width = d.confidence + '%';
+  }, 60);
+}
+</script>
+</body>
+</html>
