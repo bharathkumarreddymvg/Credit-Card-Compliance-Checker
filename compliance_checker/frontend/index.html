@@ -6,28 +6,6 @@
 <title>Credit Card Compliance Checker</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #ffffff;
-    --bg2: #f5f5f3;
-    --bg3: #efefed;
-    --text: #1a1a18;
-    --text2: #5f5e5a;
-    --text3: #888780;
-    --border: rgba(0,0,0,0.12);
-    --border2: rgba(0,0,0,0.25);
-    --green: #1D9E75;
-    --green-bg: #EAF3DE;
-    --green-text: #3B6D11;
-    --red: #E24B4A;
-    --red-bg: #FCEBEB;
-    --red-text: #A32D2D;
-    --amber: #EF9F27;
-    --blue: #378ADD;
-    --blue-bg: #E6F1FB;
-    --blue-text: #185FA5;
-    --radius: 8px;
-    --radius-lg: 12px;
-  }
   body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f3; color: #1a1a18; min-height: 100vh; display: flex; justify-content: center; padding: 2rem 1rem; }
   .app { width: 100%; max-width: 680px; }
   .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 20px; background: #fff; color: #5f5e5a; border: 0.5px solid rgba(0,0,0,0.12); margin-bottom: 10px; }
@@ -74,13 +52,13 @@
   .fi-bar-wrap { flex: 1; height: 6px; background: #f5f5f3; border-radius: 3px; overflow: hidden; }
   .fi-bar { height: 100%; border-radius: 3px; background: #378ADD; transition: width 0.5s ease; }
   .fi-pct { font-size: 12px; color: #888780; width: 36px; text-align: right; flex-shrink: 0; }
-  .error-box { padding: 12px; background: #FCEBEB; border: 1px solid #E24B4A; border-radius: 8px; font-size: 13px; color: #A32D2D; margin-top: 12px; line-height: 1.6; }
+  .error-box { padding: 12px; background: #FCEBEB; border: 1px solid #E24B4A; border-radius: 8px; font-size: 13px; color: #A32D2D; margin-top: 12px; line-height: 1.8; }
   .error-box a { color: #A32D2D; font-weight: 600; }
   .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .fade-in { animation: fadeIn 0.3s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-  @media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } .stat-cards { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -90,7 +68,6 @@
     <h1>Credit Card Compliance Checker</h1>
     <p class="subtitle">Enter credit card product parameters to check RBI regulatory compliance using a trained ML model</p>
   </div>
-
   <div class="card">
     <div class="section-label">Product Parameters</div>
     <div class="grid2">
@@ -131,7 +108,6 @@
     <button class="btn" id="predictBtn" onclick="runPrediction()">Run Compliance Check</button>
     <div id="errorBox" class="error-box" style="display:none"></div>
   </div>
-
   <div id="results" style="display:none"></div>
 </div>
 
@@ -164,12 +140,11 @@ async function runPrediction() {
     const data = await res.json();
     renderResults(data);
   } catch (e) {
-    eb.innerHTML = '<strong>Could not reach the API.</strong><br><br>'
-      + 'The Render server may be sleeping (free tier sleeps after 15 mins of inactivity).<br><br>'
-      + 'Step 1: <a href="https://credit-card-compliance-checker-2.onrender.com/health" target="_blank">Click here to wake the server</a><br>'
-      + 'Step 2: Wait 20-30 seconds for it to load<br>'
-      + 'Step 3: Come back here and click Run Compliance Check again<br><br>'
-      + '<small>Error detail: ' + e.message + '</small>';
+    eb.innerHTML = '<strong>Could not reach the API.</strong><br>'
+      + 'Step 1: <a href="https://compliance-checker-my6y.onrender.com/health" target="_blank">Click here to wake the server</a><br>'
+      + 'Step 2: Wait 30 seconds until you see status ok<br>'
+      + 'Step 3: Click Run Compliance Check again<br>'
+      + '<small>Error: ' + e.message + '</small>';
     eb.style.display = 'block';
   } finally {
     btn.disabled = false;
@@ -181,66 +156,45 @@ function renderResults(d) {
   const el = document.getElementById('results');
   el.style.display = 'block';
   el.className = 'fade-in';
-
   const isC = d.is_compliant;
   const vcls = isC ? 'compliant' : 'noncompliant';
-
-  const fiLabels = {
-    interest_rate: 'Interest Rate',
-    late_payment_fee: 'Late Payment Fee',
-    min_payment: 'Minimum Payment',
-    billing_cycle: 'Billing Cycle',
-    annual_fee: 'Annual Fee',
-    disclosure: 'Disclosure Status'
-  };
-
+  const fiLabels = { interest_rate:'Interest Rate', late_payment_fee:'Late Payment Fee', min_payment:'Minimum Payment', billing_cycle:'Billing Cycle', annual_fee:'Annual Fee', disclosure:'Disclosure Status' };
   const violHTML = d.rule_violations.length === 0
-    ? '<div class="all-ok"><span style="font-size:16px">&#10003;</span> All 6 compliance rules are satisfied</div>'
+    ? '<div class="all-ok">&#10003; All 6 compliance rules are satisfied</div>'
     : d.rule_violations.map(v =>
         '<div class="viol-item ' + v.severity + '">'
-        + '<span style="color:' + (v.severity==='high' ? '#E24B4A' : '#EF9F27') + ';font-size:16px;flex-shrink:0">&#10005;</span>'
-        + '<div>'
-        + '<div class="viol-rule">' + v.rule + '</div>'
-        + '<div class="viol-detail">Actual: <strong>' + v.actual + '</strong> &middot; Expected: <strong>' + v.expected + '</strong><span class="chip">' + v.severity + ' severity</span></div>'
-        + '</div></div>'
-      ).join('');
+        + '<span style="color:' + (v.severity==='high'?'#E24B4A':'#EF9F27') + ';font-size:16px;flex-shrink:0">&#10005;</span>'
+        + '<div><div class="viol-rule">' + v.rule + '</div>'
+        + '<div class="viol-detail">Actual: <strong>' + v.actual + '</strong> · Expected: <strong>' + v.expected + '</strong><span class="chip">' + v.severity + '</span></div>'
+        + '</div></div>').join('');
+  const fiHTML = (d.feature_contributions||[]).map(f =>
+    '<div class="fi-row"><span class="fi-label">' + (fiLabels[f.feature]||f.feature) + '</span>'
+    + '<div class="fi-bar-wrap"><div class="fi-bar" style="width:' + Math.min(f.importance_pct*2.8,100) + '%"></div></div>'
+    + '<span class="fi-pct">' + f.importance_pct.toFixed(1) + '%</span></div>').join('');
 
-  const fiHTML = (d.feature_contributions || []).map(f =>
-    '<div class="fi-row">'
-    + '<span class="fi-label">' + (fiLabels[f.feature] || f.feature) + '</span>'
-    + '<div class="fi-bar-wrap"><div class="fi-bar" style="width:' + Math.min(f.importance_pct * 2.8, 100) + '%"></div></div>'
-    + '<span class="fi-pct">' + f.importance_pct.toFixed(1) + '%</span>'
-    + '</div>'
-  ).join('');
-
-  el.innerHTML =
-    '<div class="card">'
+  el.innerHTML = '<div class="card">'
     + '<div class="section-label">Prediction Result</div>'
     + '<div class="stat-cards">'
-    + '<div class="stat-card"><div class="stat-val" style="color:' + (isC ? '#3B6D11' : '#A32D2D') + '">' + d.prediction + '</div><div class="stat-lbl">ML verdict</div></div>'
+    + '<div class="stat-card"><div class="stat-val" style="color:' + (isC?'#3B6D11':'#A32D2D') + '">' + d.prediction + '</div><div class="stat-lbl">ML verdict</div></div>'
     + '<div class="stat-card"><div class="stat-val">' + d.confidence + '%</div><div class="stat-lbl">Confidence</div></div>'
-    + '<div class="stat-card"><div class="stat-val" style="color:' + (d.violation_count > 0 ? '#A32D2D' : '#3B6D11') + '">' + d.violation_count + '/6</div><div class="stat-lbl">Rules violated</div></div>'
+    + '<div class="stat-card"><div class="stat-val" style="color:' + (d.violation_count>0?'#A32D2D':'#3B6D11') + '">' + d.violation_count + '/6</div><div class="stat-lbl">Rules violated</div></div>'
     + '</div>'
     + '<div class="result-header">'
     + '<div class="verdict-badge ' + vcls + '">' + d.prediction + '</div>'
-    + '<div class="conf-bar-wrap">'
-    + '<div class="conf-label">Model confidence</div>'
+    + '<div class="conf-bar-wrap"><div class="conf-label">Model confidence</div>'
     + '<div class="conf-track"><div class="conf-fill ' + vcls + '" id="cBar" style="width:0%"></div></div>'
-    + '<div class="conf-pct">Confidence: ' + d.confidence + '% &nbsp;&middot;&nbsp; P(Compliant): ' + d.probabilities.Compliant + '% &nbsp;&middot;&nbsp; P(Non-Compliant): ' + d.probabilities['Non-Compliant'] + '%</div>'
+    + '<div class="conf-pct">Confidence: ' + d.confidence + '% · P(Compliant): ' + d.probabilities.Compliant + '% · P(Non-Compliant): ' + d.probabilities['Non-Compliant'] + '%</div>'
     + '</div></div>'
     + '<hr class="divider">'
-    + '<div class="section-label">Rule-Level Analysis (' + d.violation_count + ' violation' + (d.violation_count !== 1 ? 's' : '') + ' detected)</div>'
+    + '<div class="section-label">Rule-Level Analysis (' + d.violation_count + ' violation' + (d.violation_count!==1?'s':'') + ')</div>'
     + '<div class="viol-list">' + violHTML + '</div>'
     + '<hr class="divider">'
-    + '<div class="section-label">Feature Importance - why this decision was made</div>'
+    + '<div class="section-label">Feature Importance</div>'
     + fiHTML
-    + '<p style="font-size:11px;color:#888780;margin-top:8px">Importance from trained Decision Tree. Model test accuracy: ' + (d.model_accuracy * 100).toFixed(1) + '%</p>'
+    + '<p style="font-size:11px;color:#888780;margin-top:8px">Model test accuracy: ' + (d.model_accuracy*100).toFixed(1) + '%</p>'
     + '</div>';
 
-  setTimeout(function() {
-    var bar = document.getElementById('cBar');
-    if (bar) bar.style.width = d.confidence + '%';
-  }, 60);
+  setTimeout(function(){ var b=document.getElementById('cBar'); if(b) b.style.width=d.confidence+'%'; }, 60);
 }
 </script>
 </body>
